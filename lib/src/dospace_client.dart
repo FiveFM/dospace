@@ -28,22 +28,18 @@ class Client {
   final http.Client httpClient;
 
   Client(
-      {@required this.region,
-      @required this.accessKey,
-      @required this.secretKey,
-      @required this.service,
-      String endpointUrl,
-      http.Client httpClient})
+      {required this.region,
+      required this.accessKey,
+      required this.secretKey,
+      required this.service,
+      String? endpointUrl,
+      http.Client? httpClient})
       : this.endpointUrl =
             endpointUrl ?? "https://${region}.digitaloceanspaces.com",
-        this.httpClient = httpClient ?? new http.Client() {
-    assert(this.region != null);
-    assert(this.accessKey != null);
-    assert(this.secretKey != null);
-  }
+        this.httpClient = httpClient ?? new http.Client() {}
 
   Future<void> close() async {
-    await httpClient.close();
+    httpClient.close();
   }
 
   @protected
@@ -53,8 +49,8 @@ class Client {
     http.StreamedResponse response = await httpClient.send(request);
     String body = await utf8.decodeStream(response.stream);
     if (response.statusCode != 200) {
-      throw new ClientException(
-          response.statusCode, response.reasonPhrase, response.headers, body);
+      throw new ClientException(response.statusCode,
+          response.reasonPhrase ?? "", response.headers, body);
     }
     xml.XmlDocument doc = xml.parse(body);
     return doc;
@@ -75,8 +71,8 @@ class Client {
   }
 
   @protected
-  String signRequest(http.BaseRequest request,
-      {Digest contentSha256, bool preSignedUrl = false, int expires = 86400}) {
+  String? signRequest(http.BaseRequest request,
+      {Digest? contentSha256, bool preSignedUrl = false, int expires = 86400}) {
     // Build canonical request
     String httpMethod = request.method;
     String canonicalURI = request.url.path;
@@ -112,12 +108,13 @@ class Client {
             hashedPayloadStr; // Set payload hash in header
       }
       request.headers.keys.forEach((String name) =>
-          (headers[name.toLowerCase()] = request.headers[name]));
+          (headers[name.toLowerCase()] = request.headers[name] ?? ""));
     }
     headers['host'] = host; // Host is a builtin header
     List<String> headerNames = headers.keys.toList()..sort();
-    String canonicalHeaders =
-        headerNames.map((s) => '${s}:${_trimAll(headers[s])}' + '\n').join();
+    String canonicalHeaders = headerNames
+        .map((s) => '${s}:${_trimAll(headers[s] ?? "")}' + '\n')
+        .join();
 
     String signedHeaders = headerNames.join(';');
 
@@ -137,7 +134,7 @@ class Client {
     }
     List<String> queryKeys = queryParameters.keys.toList()..sort();
     String canonicalQueryString = queryKeys
-        .map((s) => '${_uriEncode(s)}=${_uriEncode(queryParameters[s])}')
+        .map((s) => '${_uriEncode(s)}=${_uriEncode(queryParameters[s] ?? "")}')
         .join('&');
 
     if (preSignedUrl) {

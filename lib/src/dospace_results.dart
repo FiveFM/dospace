@@ -14,9 +14,9 @@ class BucketContent {
   final int size;
 
   BucketContent({
-    @required this.key,
-    @required this.lastModifiedUtc,
-    @required this.eTag,
-    @required this.size,
+    required this.key,
+    required this.lastModifiedUtc,
+    required this.eTag,
+    required this.size,
   });
 }
